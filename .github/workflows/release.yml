@@ -114,7 +114,7 @@ jobs:
       shell: bash
       run: |
         staging="campus_network_login-${{ needs.create-release.outputs.rg_version }}-${{ matrix.target }}"
-
+        mkdir "$staging/"
         if [ "${{ matrix.os }}" = "windows-2022" ]; then
           cp "target/release/campus_network_login.exe" "$staging/"
           7z a "$staging.zip" "$staging"
