@@ -70,31 +70,27 @@ jobs:
       PCRE2_SYS_STATIC: 1
     strategy:
       matrix:
-        build: [linux, linux-arm, macos, win-msvc, win-gnu, win32-msvc]
+        build: [linux, linux-arm, macos, win-msvc, win32-msvc]
         include:
         - build: linux
-          os: ubuntu-22.04
-          rust: nightly
+          os: ubuntu-20.04
+          rust: stable
           target: x86_64-unknown-linux-musl
         - build: linux-arm
-          os: ubuntu-22.04
-          rust: nightly
+          os: ubuntu-20.04
+          rust: stable
           target: arm-unknown-linux-gnueabihf
         - build: macos
           os: macos-12
-          rust: nightly
+          rust: stable
           target: x86_64-apple-darwin
         - build: win-msvc
           os: windows-2022
-          rust: nightly
+          rust: stable
           target: x86_64-pc-windows-msvc
-        - build: win-gnu
-          os: windows-2022
-          rust: nightly-x86_64-gnu
-          target: x86_64-pc-windows-gnu
         - build: win32-msvc
           os: windows-2022
-          rust: nightly
+          rust: stable
           target: i686-pc-windows-msvc
 
     steps:
@@ -106,6 +102,9 @@ jobs:
       with:
         toolchain: ${{ matrix.rust }}
         target: ${{ matrix.target }}
+
+    - name: Show ldd version
+    run: ldd --version
 
     - name: Build release binary
       run: cargo build --release
