@@ -104,7 +104,7 @@ jobs:
         target: ${{ matrix.target }}
 
     - name: Show ldd version
-    run: ldd --version
+      run: ldd --version
 
     - name: Build release binary
       run: cargo build --release
