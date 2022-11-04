@@ -6,10 +6,9 @@ use std::path::{Path, PathBuf};
 use std::process::exit;
 use std::{fs, thread, time::Duration};
 use std::io;
-use std::fs::{File, OpenOptions};
+use std::fs::File;
 use std::ops::Add;
-use log::{debug, info, warn};
-use simplelog::*;
+use log::{debug, info, LevelFilter, warn};
 
 fn get_query_string(text: &String) -> Option<String> {
     if !text.contains("eportal/index.jsp?wlanuserip") {
@@ -32,10 +31,10 @@ fn post_result(data: &UserData) -> Result<bool, Box<dyn std::error::Error>> {
     let res = client.get("http://baidu.com").send()?;
     let res = res.text()?;
     let res = get_query_string(&res);
-    if let None = res {
-        return Ok(true);
-    }
-    let res = res.unwrap();
+    let res = match res {
+        Some(s) => s,
+        None => return Ok(true),
+    };
 
     let params = [("userId", data.user_id.as_str()),
         ("password", data.password.as_str()),
@@ -55,7 +54,7 @@ fn post_result(data: &UserData) -> Result<bool, Box<dyn std::error::Error>> {
     let res_text = res.text()?;
     debug!("Satus Code = {}\nBody = {}", res_status, res_text);
     let success = res_text.find("success").is_some();
-    if success{
+    if success {
         info!("Internet Connect Successful.");
     }
     Ok(success)
@@ -90,7 +89,7 @@ fn get_user_data_from_stdin() -> UserData {
     }
 
     let mut service = String::new();
-    println!("服务1：学校互联网服务，服务2：联通互联网服务，服务3：移动互联网服务，服务4：电信互联网服务，服务5：校内免费服务，请输入你的服务:");
+    println!("服务1：学校互联网服务，服务2：联通互联网服务，服务3：移动互联网服务，服务4：电信互联网服务，服务5：校内免费服务\n请输入你的服务:");
     io::stdin().read_line(&mut service).unwrap();
     let service_num = String::from(service.trim()).parse::<i32>().unwrap();
     match service_num {
@@ -105,7 +104,7 @@ fn get_user_data_from_stdin() -> UserData {
         }
     }
 
-    thread::sleep(Duration::from_secs(1));
+    thread::sleep(Duration::from_micros(500));
 
     UserData {
         user_id,
@@ -137,20 +136,26 @@ fn read_json_from_file<P: AsRef<Path>>(path: P) -> Result<UserData, Box<dyn std:
 }
 
 fn main() {
-    CombinedLogger::init(
-        vec![
-            TermLogger::new(LevelFilter::Debug, Config::default(), TerminalMode::Mixed, ColorChoice::Auto),
-            WriteLogger::new(LevelFilter::Debug, Config::default(), OpenOptions::new().append(true).open("campus_network_login.log").unwrap()),
-        ]
-    ).unwrap();
-
-    let data: UserData = read_json_from_file(get_config_path()).unwrap_or_else(
-        |_| {
-            let data = get_user_data_from_stdin();
-            fs::write(get_config_path(), serde_json::to_string(&data).unwrap()).unwrap();
-            data
+    let mut edit_data = false;
+    let mut logger = false;
+    for argument in std::env::args() {
+        if argument == "-e" {
+            edit_data = true;
+        }else if argument == "-v" {
+            logger = true;
         }
-    );
+    }
+
+    env_logger::builder().filter_level(if logger { LevelFilter::Debug } else { LevelFilter::Off }).init();
+
+    let read_result = read_json_from_file(get_config_path());
+    let data;
+    if read_result.is_ok() & !edit_data {
+        data = read_result.unwrap();
+    } else {
+        data = get_user_data_from_stdin();
+        fs::write(get_config_path(), serde_json::to_string(&data).unwrap()).unwrap();
+    }
 
     for i in 0..30 {
         if post_result(&data).unwrap_or_else(|e| {
