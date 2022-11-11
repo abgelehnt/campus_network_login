@@ -119,7 +119,7 @@ jobs:
     - name: Build archive
       shell: bash
       run: |
-        staging="campus_network_login-v0.1-${{ matrix.name }}"
+        staging="campus_network_login-${{ needs.create-release.outputs.rg_version }}-${{ matrix.name }}"
         if [ "${{ matrix.os }}" = "windows-2022" ]; then
           cp "target/release/campus_network_login.exe" "campus_network_login.exe"
           7z a "$staging.zip" "campus_network_login.exe"
