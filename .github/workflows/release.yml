@@ -70,28 +70,33 @@ jobs:
       PCRE2_SYS_STATIC: 1
     strategy:
       matrix:
-        build: [linux, linux-arm, macos, win-msvc, win32-msvc]
+        build: [ubuntu-20.04, ubuntu-22.04, linux-arm, macos, win-msvc]
         include:
-        - build: linux
+        - build: ubuntu-20.04
           os: ubuntu-20.04
           rust: stable
           target: x86_64-unknown-linux-musl
+          name: x86_64-ubuntu-20.04
+        - build: ubuntu-22.04
+          os: ubuntu-22.04
+          rust: stable
+          target: x86_64-unknown-linux-musl
+          name: x86_64-ubuntu-22.04
         - build: linux-arm
           os: ubuntu-20.04
           rust: stable
           target: arm-unknown-linux-gnueabihf
+          name: arm-unknown-linux-gnueabihf
         - build: macos
           os: macos-12
           rust: stable
           target: x86_64-apple-darwin
+          name: x86_64-apple-darwin
         - build: win-msvc
           os: windows-2022
           rust: stable
           target: x86_64-pc-windows-msvc
-        - build: win32-msvc
-          os: windows-2022
-          rust: stable
-          target: i686-pc-windows-msvc
+          name: x86_64-pc-windows-msvc
 
     steps:
     - name: Checkout repository
@@ -109,7 +114,7 @@ jobs:
     - name: Build archive
       shell: bash
       run: |
-        staging="campus_network_login-v0.1-${{ matrix.target }}"
+        staging="campus_network_login-v0.1-${{ matrix.name }}"
         if [ "${{ matrix.os }}" = "windows-2022" ]; then
           cp "target/release/campus_network_login.exe" "campus_network_login.exe"
           7z a "$staging.zip" "campus_network_login.exe"
