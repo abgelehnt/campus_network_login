@@ -6,10 +6,9 @@ use std::path::{Path, PathBuf};
 use std::process::exit;
 use std::{fs, thread, time::Duration};
 use std::io;
-use std::fs::{File, OpenOptions};
+use std::fs::File;
 use std::ops::Add;
 use log::{debug, info, LevelFilter, warn};
-use simplelog::*;
 
 fn get_query_string(text: &String) -> Option<String> {
     if !text.contains("eportal/index.jsp?wlanuserip") {
@@ -137,22 +136,17 @@ fn read_json_from_file<P: AsRef<Path>>(path: P) -> Result<UserData, Box<dyn std:
 }
 
 fn main() {
-    CombinedLogger::init(
-        vec![
-            TermLogger::new(LevelFilter::Debug, Config::default(), TerminalMode::Mixed, ColorChoice::Auto),
-            WriteLogger::new(LevelFilter::Debug, Config::default(), OpenOptions::new().create(true).append(true).open("log.log").unwrap()),
-        ]
-    ).unwrap();
-
     let mut edit_data = false;
     let mut logger = false;
     for argument in std::env::args() {
         if argument == "-e" {
             edit_data = true;
-        }else if argument == "-v" {
+        } else if argument == "-v" {
             logger = true;
         }
     }
+
+    env_logger::builder().filter_level(if logger { LevelFilter::Debug } else { LevelFilter::Off }).init();
 
     let read_result = read_json_from_file(get_config_path());
     let data;
@@ -170,7 +164,7 @@ fn main() {
         }) {
             exit(0);
         }
-        thread::sleep(Duration::from_micros(500));
+        thread::sleep(Duration::from_secs_f32(0.5));
     }
     warn!("Connect Error");
     exit(1);
